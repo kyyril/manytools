@@ -80,3 +80,14 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Highlight styles */
+mark {
+  padding: 0.1em 0.2em;
+  border-radius: 0.2em;
+  transition: background-color 0.2s ease;
+}
+
+.dark mark {
+  color: inherit;
+}

@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const GEMINI_API_KEY = "AIzaSyA8yqakjPYaHsTRSOKjG5d4-6tYXfYN1Wg";
+const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_1!;
 
 interface GeminiConfig {
   model: string;
@@ -52,4 +52,68 @@ export async function processWithGemini(
       error: error instanceof Error ? error.message : "An error occurred",
     };
   }
+}
+
+export interface ParaphraseStyle {
+  name: string;
+  instruction: string;
+}
+
+export const paraphraseStyles: Record<string, ParaphraseStyle> = {
+  standard: {
+    name: "Standard",
+    instruction:
+      "Rewrite the text while maintaining its original meaning, using standard language.",
+  },
+  formal: {
+    name: "Formal",
+    instruction:
+      "Rewrite the text in a formal and professional tone, using sophisticated vocabulary.",
+  },
+  simple: {
+    name: "Simple",
+    instruction:
+      "Simplify the text using clear, straightforward language while preserving the core meaning.",
+  },
+  creative: {
+    name: "Creative",
+    instruction:
+      "Rewrite the text creatively with engaging language while keeping the main message.",
+  },
+};
+
+export async function paraphraseWithGemini(
+  text: string,
+  style: string,
+  config: GeminiConfig = geminiConfig
+): Promise<GeminiResponse> {
+  const selectedStyle = paraphraseStyles[style] || paraphraseStyles.standard;
+
+  const prompt = `
+    Task: Paraphrase the following text
+    Style: ${selectedStyle.name}
+    Instructions: ${selectedStyle.instruction}
+    
+    Important formatting rules:
+    1. Mark changed phrases with [highlight]changed text[/highlight]
+    2. Preserve original meaning while modifying the structure
+    3. Maintain appropriate tone for the selected style
+    4. Keep similar length to the original
+    
+    Text to paraphrase:
+    "${text}"
+    
+    Provide only the paraphrased text with highlights, no additional commentary.
+  `;
+
+  return processWithGemini(
+    {
+      text: prompt,
+      instruction: selectedStyle.instruction,
+    },
+    {
+      ...config,
+      temperature: 0.7, // Adjust for creativity while maintaining coherence
+    }
+  );
 }
