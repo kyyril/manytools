@@ -187,3 +187,72 @@ export async function summarizeWithGemini(
     }
   );
 }
+
+export interface GrammarStyle {
+  name: string;
+  instruction: string;
+  description: string;
+}
+
+export const grammarStyles: Record<string, GrammarStyle> = {
+  standard: {
+    name: "Standard",
+    instruction: "Fix basic grammar, spelling, and punctuation errors",
+    description: "Basic grammar correction",
+  },
+  academic: {
+    name: "Academic",
+    instruction:
+      "Correct and enhance text for academic writing, using formal language",
+    description: "Formal academic style",
+  },
+  business: {
+    name: "Business",
+    instruction: "Optimize text for professional business communication",
+    description: "Professional business tone",
+  },
+  creative: {
+    name: "Creative",
+    instruction: "Fix errors while maintaining creative style and flow",
+    description: "Creative writing style",
+  },
+};
+
+export async function checkGrammarWithGemini(
+  text: string,
+  style: string,
+  config: GeminiConfig = geminiConfig
+): Promise<GeminiResponse> {
+  const selectedStyle = grammarStyles[style] || grammarStyles.standard;
+
+  const prompt = `
+    Task: Grammar and Style Check
+    Style: ${selectedStyle.name}
+    Instructions: ${selectedStyle.instruction}
+    
+    Formatting Rules:
+    1. Mark corrections with [fix=original text]corrected text[/fix]
+    2. Mark style improvements with [improve]suggested text[/improve]
+    3. Add error explanations with [note]explanation[/note]
+    4. Calculate metrics:
+       - [errors=N] for number of grammar/spelling errors
+       - [improvements=N] for style improvements
+       - [score=N] for overall writing score (0-100)
+    
+    Text to check:
+    "${text}"
+    
+    Provide the corrected text with all markup.
+  `;
+
+  return processWithGemini(
+    {
+      text: prompt,
+      instruction: selectedStyle.instruction,
+    },
+    {
+      ...config,
+      temperature: 0.1, // Low temperature for accurate corrections
+    }
+  );
+}

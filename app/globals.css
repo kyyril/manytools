@@ -91,3 +91,89 @@ mark {
 .dark mark {
   color: inherit;
 }
+
+/* Summary Styles */
+.summary-content mark {
+  padding: 0.1em 0.2em;
+  border-radius: 0.2em;
+  transition: background-color 0.2s ease;
+}
+
+.summary-content ul {
+  list-style: none;
+  padding-left: 1.5em;
+}
+
+.summary-content ul li::before {
+  content: "◆";
+  color: #10b981;
+  font-weight: bold;
+  display: inline-block;
+  width: 1em;
+  margin-left: -1em;
+}
+
+.dark .summary-content mark {
+  color: inherit;
+}
+
+/* Grammar Checker Styles */
+.correction {
+  position: relative;
+  cursor: help;
+}
+
+.correction:hover::before {
+  content: attr(data-original);
+  position: absolute;
+  top: -1.5em;
+  left: 0;
+  background: #f3f4f6;
+  padding: 0.2em 0.5em;
+  border-radius: 0.2em;
+  font-size: 0.8em;
+  color: #ef4444;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+.dark .correction:hover::before {
+  background: #1f2937;
+  color: #f87171;
+}
+
+.explanation {
+  display: none;
+  margin-top: 0.25em;
+  padding-left: 1em;
+  border-left: 2px solid #e5e7eb;
+}
+
+.show-explanations .explanation {
+  display: block;
+}
+
+/* Grammar Checker Interactive Styles */
+.correction-item {
+  position: relative;
+  cursor: pointer;
+}
+
+.correction-item mark:hover {
+  transition: all 0.2s ease;
+}
+
+.correction-item mark:hover::after {
+  content: "Click to apply correction";
+  position: absolute;
+  bottom: -1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f2937;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  z-index: 10;
+}
