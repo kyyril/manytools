@@ -117,3 +117,73 @@ export async function paraphraseWithGemini(
     }
   );
 }
+
+export interface SummarizeStyle {
+  name: string;
+  instruction: string;
+  description: string;
+}
+
+export const summarizeStyles: Record<string, SummarizeStyle> = {
+  smart: {
+    name: "Smart",
+    instruction:
+      "Create a concise summary with key points highlighted and maintain academic tone",
+    description: "Intelligent summary with highlighted key concepts",
+  },
+  bullet: {
+    name: "Bullet Points",
+    instruction:
+      "Transform the text into organized bullet points with main ideas and supporting details",
+    description: "Clear bullet-point format",
+  },
+  storytelling: {
+    name: "Storytelling",
+    instruction:
+      "Summarize the text in an engaging narrative style while preserving key information",
+    description: "Narrative style summary",
+  },
+  eli5: {
+    name: "ELI5",
+    instruction:
+      "Explain the text as if explaining to a 5-year-old, using simple language",
+    description: "Simplified explanation",
+  },
+};
+
+export async function summarizeWithGemini(
+  text: string,
+  style: string,
+  length: number,
+  config: GeminiConfig = geminiConfig
+): Promise<GeminiResponse> {
+  const selectedStyle = summarizeStyles[style] || summarizeStyles.smart;
+
+  const prompt = `
+    Task: Summarize the following text
+    Style: ${selectedStyle.name}
+    Target Length: ${length}% of original
+    
+    Formatting Instructions:
+    1. Mark important concepts with [key]important text[/key]
+    2. For bullet points style, use • at the start of each point
+    3. Add a [TLDR] section at the beginning for ultra-short summary
+    4. Maintain the specified style's tone and format
+    
+    Text to summarize:
+    "${text}"
+    
+    Provide the summary following the specified format.
+  `;
+
+  return processWithGemini(
+    {
+      text: prompt,
+      instruction: selectedStyle.instruction,
+    },
+    {
+      ...config,
+      temperature: 0.3, // Lower temperature for more focused summaries
+    }
+  );
+}

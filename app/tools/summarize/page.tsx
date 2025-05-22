@@ -12,11 +12,18 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useTokens } from "@/hooks/use-tokens";
 import { useToast } from "@/hooks/use-toast";
 import ToolHeader from "@/components/tools/tool-header";
 import ToolUsageExamples from "@/components/tools/tool-usage-examples";
-import { processWithGemini } from "@/lib/gemini";
+import { summarizeWithGemini, summarizeStyles } from "@/lib/gemini";
 
 export default function SummarizePage() {
   const { useToken } = useTokens();
@@ -27,6 +34,7 @@ export default function SummarizePage() {
   const [length, setLength] = useState([50]); // percentage of original text
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [style, setStyle] = useState("smart");
 
   const handleSummarize = async () => {
     if (!inputText.trim()) {
@@ -34,7 +42,6 @@ export default function SummarizePage() {
       return;
     }
 
-    // Check token availability
     if (!useToken()) {
       toast("Please watch an ad to earn more tokens.");
       return;
@@ -43,20 +50,27 @@ export default function SummarizePage() {
     setIsGenerating(true);
 
     try {
-      const request = {
-        text: inputText,
-        instruction: `Summarize the following text to approximately ${length[0]}% of its original length. 
-                   Maintain key points and ensure the summary is coherent and well-structured.`,
-      };
-
-      const response = await processWithGemini(request);
+      const response = await summarizeWithGemini(inputText, style, length[0]);
 
       if (response.error) {
         throw new Error(response.error);
       }
 
-      setOutputText(response.content);
-      toast("Summarizing complete");
+      // Process the formatted text
+      const formattedText = response.content
+        .replace(
+          /\[key\](.*?)\[\/key\]/g,
+          '<mark class="bg-emerald-200 dark:bg-emerald-800/50">$1</mark>'
+        )
+        .replace(
+          /\[TLDR\]/g,
+          '<strong class="text-emerald-600 dark:text-emerald-400">TLDR:</strong>'
+        )
+        .replace(/•/g, "◆");
+
+      setOutputText(formattedText);
+
+      toast("Summarization complete");
     } catch (error) {
       toast("Failed to summarize text. Please try again.");
       console.error(error);
@@ -110,6 +124,18 @@ export default function SummarizePage() {
                   onSelectExample={(example) => setInputText(example)}
                 />
                 <div className="flex items-center gap-2">
+                  <Select value={style} onValueChange={setStyle}>
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder="Style" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(summarizeStyles).map(([key, style]) => (
+                        <SelectItem key={key} value={key}>
+                          {style.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <Button
                     onClick={handleSummarize}
                     disabled={isGenerating || !inputText.trim()}
@@ -172,7 +198,10 @@ export default function SummarizePage() {
                     <div className="h-4 bg-muted rounded w-4/5"></div>
                   </div>
                 ) : outputText ? (
-                  <p className="whitespace-pre-line">{outputText}</p>
+                  <p
+                    className="whitespace-pre-line"
+                    dangerouslySetInnerHTML={{ __html: outputText }}
+                  ></p>
                 ) : (
                   <p className="text-muted-foreground">
                     Summarized text will appear here...
