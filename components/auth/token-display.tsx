@@ -41,7 +41,7 @@ const TokenDisplay = () => {
       await new Promise((resolve) => setTimeout(resolve, 5000));
 
       // Add tokens only after animation completes
-      await addTokens(5);
+      await addTokens(99);
 
       // Close dialog after a short delay
       setTimeout(() => {

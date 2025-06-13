@@ -19,10 +19,8 @@ const Navbar = () => {
     { name: "Home", path: "/" },
     { name: "Paraphrase", path: "/tools/paraphrase" },
     { name: "Summarize", path: "/tools/summarize" },
-    { name: "Resume Generator", path: "/tools/resume" },
     { name: "Grammar Checker", path: "/tools/grammar" },
-    { name: "Plagiarism Check", path: "/tools/plagiarism" },
-    { name: "AI Detector", path: "/tools/ai-detector" },
+    { name: "Plagiarism", path: "/tools/plagiarism" },
   ];
 
   return (

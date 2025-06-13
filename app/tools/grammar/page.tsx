@@ -186,7 +186,7 @@ export default function GrammarPage() {
         <div className="grid md:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Original Texttxxxt</CardTitle>
+              <CardTitle>Original Text</CardTitle>
               <CardDescription>
                 Enter the text you want to check
               </CardDescription>

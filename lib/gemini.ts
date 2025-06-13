@@ -256,3 +256,24 @@ export async function checkGrammarWithGemini(
     }
   );
 }
+
+export const checkPlagiarism = async (text: string): Promise<any> => {
+  const response = await processWithGemini({
+    text,
+    instruction: `
+      Analyze this text for potential plagiarism. Return JSON with:
+      - similarityScore: percentage of content that matches other sources (0-100)
+      - originalityScore: percentage of original content (0-100)
+      - matchedSources: array of matches with url, similarity percentage, and matched text
+      
+      Format response as valid JSON only.
+    `,
+  });
+
+  try {
+    const result = JSON.parse(response.content);
+    return result;
+  } catch (error) {
+    throw new Error("Failed to analyze text");
+  }
+};
