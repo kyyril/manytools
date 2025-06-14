@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import SidebarInput from "@/components/SidebarInput";
+import InitialMakalahForm from "@/components/InitialMakalahForm";
 import ChunkDisplay from "@/components/ChunkDisplay";
 import Editor from "@/components/Editor";
 import {
@@ -12,18 +12,30 @@ import {
   Chapter,
   SubChapter,
 } from "@/lib/checkpoint";
-import { generateChunkedContent } from "@/lib/gemini";
+import {
+  generateChunkedContent,
+  checkGrammarWithGemini,
+  paraphraseWithGemini,
+  summarizeWithGemini,
+  ParaphraseStyle,
+  SummarizeStyle,
+  paraphraseStyles,
+  summarizeStyles,
+  grammarStyles,
+} from "@/lib/gemini";
 import { countTokens } from "@/lib/tokenizer";
 import { v4 as uuidv4 } from "uuid";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import makalahSampleData from "@/data/makalah-sample.json";
-
-interface InitialMakalahStructure {
-  judul: string;
-  topik: string;
-  babInput: string; // Changed to string for natural language input
-}
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 
 interface ParsedMakalahStructure {
   bab: { title: string; sub: { title: string }[] }[];
@@ -41,6 +53,13 @@ export default function BuilderPage() {
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
   const [currentSubChapterIndex, setCurrentSubChapterIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGrammarLoading, setIsGrammarLoading] = useState(false);
+  const [isParaphraseLoading, setIsParaphraseLoading] = useState(false);
+  const [isSummarizeLoading, setSummarizeLoading] = useState(false);
+  const [paraphraseStyle, setParaphraseStyle] = useState("standard");
+  const [summarizeStyle, setSummarizeStyle] = useState("smart");
+  const [summarizeLength, setSummarizeLength] = useState<number[]>([50]);
+  const [grammarStyle, setGrammarStyle] = useState("standard");
 
   const handleLoadSample = () => {
     const newMakalahId = uuidv4();
@@ -137,9 +156,11 @@ export default function BuilderPage() {
     }
   }, [makalah]);
 
-  const handleInitialGenerate = async (
-    initialStructure: InitialMakalahStructure
-  ) => {
+  const handleInitialGenerate = async (initialStructure: {
+    judul: string;
+    topik: string;
+    babInput: string;
+  }) => {
     if (!makalah) return;
 
     setIsLoading(true);
@@ -491,7 +512,10 @@ export default function BuilderPage() {
 
   return (
     <div className="flex h-screen">
-      <SidebarInput onGenerate={handleInitialGenerate} />
+      <InitialMakalahForm
+        onGenerate={handleInitialGenerate}
+        isLoading={isLoading}
+      />
       <div className="flex-1 flex flex-col">
         <div className="p-4 border-b flex justify-between items-center">
           <h1 className="text-2xl font-bold">MakalahAI Builder</h1>
