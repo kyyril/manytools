@@ -57,12 +57,12 @@ export default function GrammarPage() {
 
   const handleCheck = async () => {
     if (!inputText.trim()) {
-      toast("Please enter some text to check.");
+      toast({ description: "Please enter some text to check." });
       return;
     }
 
     if (!useToken()) {
-      toast("Please watch an ad to earn more tokens.");
+      toast({ description: "Please watch an ad to earn more tokens." });
       return;
     }
 
@@ -157,9 +157,12 @@ export default function GrammarPage() {
         readabilityScore: parseInt(scoreMatch?.[1] || "0"),
       });
 
-      toast("Grammar check complete");
+      toast({ description: "Grammar check complete" });
     } catch (error) {
-      toast("Failed to check grammar. Please try again.");
+      toast({
+        description: "Failed to check grammar. Please try again.",
+        variant: "destructive",
+      });
       console.error(error);
     } finally {
       setIsGenerating(false);
@@ -171,7 +174,7 @@ export default function GrammarPage() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
 
-    toast("Copied!");
+    toast({ description: "Copied!" });
   };
 
   const handleApplyCorrection = (index: number) => {
@@ -188,7 +191,7 @@ export default function GrammarPage() {
       prev.map((c, i) => (i === index ? { ...c, applied: true } : c))
     );
 
-    toast("Correction applied!");
+    toast({ description: "Correction applied!" });
   };
 
   const handleIgnoreCorrection = (index: number) => {

@@ -54,6 +54,42 @@ export async function processWithGemini(
   }
 }
 
+export async function generateChunkedContent(
+  instruction: string,
+  context: string,
+  chunkRequest: string,
+  config: GeminiConfig = geminiConfig
+): Promise<GeminiResponse> {
+  try {
+    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel(config);
+
+    const prompt = `
+      Overall Instructions: ${instruction}
+      Current Context: ${context}
+      Generate the following chunk: ${chunkRequest}
+      
+      Please provide only the generated content for the chunk, no additional commentary.
+    `;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const formattedText = response.text().trim();
+
+    return {
+      content: formattedText,
+    };
+  } catch (error) {
+    return {
+      content: "",
+      error:
+        error instanceof Error
+          ? error.message
+          : "An error occurred during chunked generation",
+    };
+  }
+}
+
 export interface ParaphraseStyle {
   name: string;
   instruction: string;
@@ -257,6 +293,20 @@ export async function checkGrammarWithGemini(
   );
 }
 
+export interface PlagiarismCorrectionResult {
+  originalText: string;
+  correctedText: string;
+  changes: Array<{
+    original: string;
+    corrected: string;
+    reason: string;
+    startIndex: number;
+    endIndex: number;
+  }>;
+  status: "plagiarized" | "original" | "partially_plagiarized";
+  summary: string;
+}
+
 export const checkPlagiarism = async (text: string): Promise<any> => {
   const response = await processWithGemini({
     text,
@@ -271,9 +321,74 @@ export const checkPlagiarism = async (text: string): Promise<any> => {
   });
 
   try {
-    const result = JSON.parse(response.content);
+    const jsonString = response.content
+      .replace(/```json\n(.*)\n```/s, "$1")
+      .trim();
+    const result = JSON.parse(jsonString);
     return result;
   } catch (error) {
-    throw new Error("Failed to analyze text");
+    console.error(
+      "Failed to parse plagiarism analysis response:",
+      response.content,
+      error
+    );
+    throw new Error("Failed to analyze text. Invalid response from AI.");
   }
 };
+
+export async function correctPlagiarismWithGemini(
+  text: string,
+  config: GeminiConfig = geminiConfig
+): Promise<PlagiarismCorrectionResult> {
+  const prompt = `
+    Task: Correct plagiarized text and provide a clear status.
+    Instructions:
+    1. Analyze the provided text for plagiarized segments.
+    2. Rewrite the plagiarized parts to make them original while preserving the original meaning.
+    3. Highlight the corrected parts using [corrected]new text[/corrected] tags.
+    4. Provide a JSON output with the following structure:
+       - originalText: The original input text.
+       - correctedText: The text after corrections, with highlighted changes.
+       - changes: An array of objects, each detailing a specific correction:
+         - original: The exact plagiarized phrase/sentence.
+         - corrected: The new, original phrase/sentence.
+         - reason: Explanation for the change (e.g., "Paraphrased to avoid plagiarism").
+         - startIndex: The starting index of the original text in the input.
+         - endIndex: The ending index of the original text in the input.
+       - status: 'plagiarized' if significant plagiarism remains, 'original' if no plagiarism detected after correction, 'partially_plagiarized' if some parts were corrected but others might still be problematic.
+       - summary: A brief summary of the correction process and overall originality status.
+
+    Text to correct:
+    "${text}"
+
+    Provide only the JSON output.
+  `;
+
+  const response = await processWithGemini(
+    {
+      text: prompt,
+      instruction: "Correct plagiarized text and provide detailed status.",
+    },
+    {
+      ...config,
+      temperature: 0.5, // Balance creativity for correction with accuracy
+    }
+  );
+
+  try {
+    const jsonString = response.content
+      .replace(/```json\n(.*)\n```/s, "$1")
+      .trim();
+    const result = JSON.parse(jsonString);
+    return result;
+  } catch (error) {
+    console.error(
+      "Failed to parse Gemini correction response:",
+      response.content,
+      error
+    );
+    throw new Error(
+      "Failed to process plagiarism correction. Invalid response from AI."
+    );
+  }
+}

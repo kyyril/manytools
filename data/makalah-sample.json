@@ -1,0 +1,22 @@
+{
+  "title": "Sample Makalah Title",
+  "abstract": "This is an abstract for the sample makalah. It provides a brief overview of the content.",
+  "sections": [
+    {
+      "heading": "Introduction",
+      "content": "This is the introductory section of the sample makalah. It sets the stage for the topic being discussed."
+    },
+    {
+      "heading": "Body Paragraph 1",
+      "content": "This is the first body paragraph. It contains detailed information and arguments related to the topic."
+    },
+    {
+      "heading": "Body Paragraph 2",
+      "content": "This is the second body paragraph, further elaborating on different aspects of the subject matter."
+    },
+    {
+      "heading": "Conclusion",
+      "content": "This is the concluding section, summarizing the main points and offering final thoughts on the makalah."
+    }
+  ]
+}

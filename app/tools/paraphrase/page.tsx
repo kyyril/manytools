@@ -36,12 +36,12 @@ export default function ParaphrasePage() {
 
   const handleParaphrase = async () => {
     if (!inputText.trim()) {
-      toast("Please enter some text to paraphrase.");
+      toast({ description: "Please enter some text to paraphrase." });
       return;
     }
 
     if (!useToken()) {
-      toast("Please watch an ad to earn more tokens.");
+      toast({ description: "Please watch an ad to earn more tokens." });
       return;
     }
 
@@ -62,9 +62,12 @@ export default function ParaphrasePage() {
 
       setOutputText(formattedText);
 
-      toast("Paraphrasing complete");
+      toast({ description: "Paraphrasing complete" });
     } catch (error) {
-      toast("Failed to paraphrase text. Please try again.");
+      toast({
+        description: "Failed to paraphrase text. Please try again.",
+        variant: "destructive",
+      });
       console.error(error);
     } finally {
       setIsGenerating(false);
@@ -76,7 +79,7 @@ export default function ParaphrasePage() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
 
-    toast("Copied!");
+    toast({ description: "Copied!" });
   };
 
   const examples = [

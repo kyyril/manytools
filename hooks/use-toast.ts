@@ -1,7 +1,33 @@
-import { toast } from "sonner"
+import { toast as sonnerToast } from "sonner";
+import { ToastAction, type ToastProps } from "@/components/ui/toast"; // Import ToastProps from toast.tsx
+import { VariantProps } from "class-variance-authority"; // Import VariantProps
+import { toastVariants } from "@/components/ui/toast"; // Import toastVariants
 
-export const useToast = () => {
+type Toast = typeof sonnerToast;
+
+interface CustomToastProps
+  extends ToastProps,
+    VariantProps<typeof toastVariants> {
+  title?: string;
+  description?: string;
+  action?: React.ReactElement<typeof ToastAction>;
+}
+
+export function useToast() {
+  const toast = ({
+    title,
+    description,
+    action,
+    ...props
+  }: CustomToastProps) => {
+    return sonnerToast(title, {
+      description,
+      action,
+      ...props,
+    });
+  };
+
   return {
     toast,
-  }
+  };
 }

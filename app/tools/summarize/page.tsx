@@ -38,12 +38,12 @@ export default function SummarizePage() {
 
   const handleSummarize = async () => {
     if (!inputText.trim()) {
-      toast("Please enter some text to summarize.");
+      toast({ description: "Please enter some text to summarize." });
       return;
     }
 
     if (!useToken()) {
-      toast("Please watch an ad to earn more tokens.");
+      toast({ description: "Please watch an ad to earn more tokens." });
       return;
     }
 
@@ -70,9 +70,12 @@ export default function SummarizePage() {
 
       setOutputText(formattedText);
 
-      toast("Summarization complete");
+      toast({ description: "Summarization complete" });
     } catch (error) {
-      toast("Failed to summarize text. Please try again.");
+      toast({
+        description: "Failed to summarize text. Please try again.",
+        variant: "destructive",
+      });
       console.error(error);
     } finally {
       setIsGenerating(false);
@@ -84,7 +87,7 @@ export default function SummarizePage() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
 
-    toast("Copied!");
+    toast({ description: "Copied!" });
   };
 
   const examples = [

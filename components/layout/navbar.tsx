@@ -17,6 +17,8 @@ const Navbar = () => {
 
   const routes = [
     { name: "Home", path: "/" },
+    { name: "MakalahAI Builder", path: "/builder" },
+    { name: "Project History", path: "/history" },
     { name: "Paraphrase", path: "/tools/paraphrase" },
     { name: "Summarize", path: "/tools/summarize" },
     { name: "Grammar Checker", path: "/tools/grammar" },
