@@ -8,25 +8,17 @@ interface SidebarInputProps {
   onGenerate: (structure: {
     judul: string;
     topik: string;
-    bab: { title: string; sub: { title: string }[] }[];
+    babInput: string; // Changed to string for natural language input
   }) => void;
 }
 
 export default function SidebarInput({ onGenerate }: SidebarInputProps) {
   const [judul, setJudul] = useState("");
   const [topik, setTopik] = useState("");
-  const [babInput, setBabInput] = useState(""); // JSON string for chapters
+  const [babInput, setBabInput] = useState(""); // Natural language input for chapters
 
   const handleSubmit = () => {
-    try {
-      const bab = JSON.parse(babInput);
-      onGenerate({ judul, topik, bab });
-    } catch (error) {
-      alert(
-        'Invalid JSON for Chapters. Please use the format: [{"title": "Bab 1", "sub": [{"title": "Subbab 1.1"}]}]'
-      );
-      console.error("Error parsing chapter JSON:", error);
-    }
+    onGenerate({ judul, topik, babInput });
   };
 
   return (
@@ -52,21 +44,15 @@ export default function SidebarInput({ onGenerate }: SidebarInputProps) {
           />
         </div>
         <div>
-          <Label htmlFor="bab">Struktur Bab (JSON)</Label>
+          <Label htmlFor="bab">Struktur Bab (Deskripsi)</Label>
           <Textarea
             id="bab"
             value={babInput}
             onChange={(e) => setBabInput(e.target.value)}
-            placeholder={`[
-  {"title": "Pendahuluan", "sub": [
-    {"title": "Latar Belakang"},
-    {"title": "Rumusan Masalah"}
-  ]},
-  {"title": "Pembahasan", "sub": [
-    {"title": "Konsep Dasar AI"},
-    {"title": "Implementasi AI dalam Pembelajaran"}
-  ]}
-]`}
+            placeholder={`Contoh:
+- Bab 1: Pendahuluan (Latar Belakang, Rumusan Masalah)
+- Bab 2: Pembahasan (Konsep Dasar AI, Implementasi AI dalam Pembelajaran)
+- Bab 3: Penutup (Kesimpulan, Saran)`}
             rows={10}
             className="font-mono text-xs"
           />
