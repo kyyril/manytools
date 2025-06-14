@@ -1,12 +1,19 @@
+"use client";
+
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MakalahStructure, loadCheckpoint } from "@/lib/checkpoint";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-export default function CheckpointPage() {
-  const router = useRouter();
-  const { id } = router.query as { id: string };
+interface CheckpointPageProps {
+  params: {
+    id: string;
+  };
+}
+
+export default function CheckpointPage({ params }: CheckpointPageProps) {
+  const { id } = params;
   const [makalah, setMakalah] = useState<MakalahStructure | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

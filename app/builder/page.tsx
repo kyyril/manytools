@@ -167,29 +167,31 @@ export default function BuilderPage() {
         "Abstract" // Use a generic name for the abstract chunk request
       );
 
+      if (abstractContent.error) {
+        throw new Error(abstractContent.error); // Propagate the specific error
+      }
+
       setMakalah((prev) => {
         if (!prev) return null;
         return {
           ...prev,
-          abstrak: abstractContent.content || "Failed to generate abstract.",
+          abstrak: abstractContent.content,
         };
       });
-      setCurrentChunkContent(
-        abstractContent.content || "Failed to generate abstract."
-      );
-      setEditorContent(
-        abstractContent.content || "Failed to generate abstract."
-      );
+      setCurrentChunkContent(abstractContent.content);
+      setEditorContent(abstractContent.content);
 
       toast({
         description:
           "Initial structure and abstract generated! You can now start generating chapters.",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error during initial generation:", error);
       toast({
         title: "Error",
-        description: "Failed to generate initial structure. Please try again.",
+        description: `Failed to generate initial structure: ${
+          error.message || "Unknown error"
+        }. Please try again.`,
         variant: "destructive",
       });
     } finally {
@@ -261,9 +263,16 @@ export default function BuilderPage() {
         context,
         currentSubChapter.title
       );
-      const newContent =
-        generated.content ||
-        `Failed to generate content for ${currentSubChapter.title}.`;
+      const newContent = generated.content;
+      if (generated.error) {
+        toast({
+          title: "Error",
+          description: `Failed to generate content for "${currentSubChapter.title}": ${generated.error}`,
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
 
       setMakalah((prev) => {
         if (!prev) return null;
@@ -289,11 +298,13 @@ export default function BuilderPage() {
         title: "Success",
         description: `Content for "${currentSubChapter.title}" has been generated.`,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating chunk:", error);
       toast({
         title: "Error",
-        description: `Failed to generate content for "${currentSubChapter.title}".`,
+        description: `Failed to generate content for "${
+          currentSubChapter.title
+        }": ${error.message || "Unknown error"}.`,
         variant: "destructive",
       });
     } finally {
