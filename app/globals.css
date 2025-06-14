@@ -162,18 +162,3 @@ mark {
 .correction-item mark:hover {
   transition: all 0.2s ease;
 }
-
-.correction-item mark:hover::after {
-  content: "Click to apply correction";
-  position: absolute;
-  bottom: -1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #1f2937;
-  color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.75rem;
-  white-space: nowrap;
-  z-index: 10;
-}

@@ -92,28 +92,56 @@ export default function GrammarPage() {
       setCorrections(newCorrections);
 
       // Process the formatted text
-      const formattedText = response.content
-        .replace(/\[errors=\d+\]|\[improvements=\d+\]|\[score=\d+\]/g, "") // Remove status markers from main text
-        .replace(
-          /\[fix=(.*?)\](.*?)\[\/fix\]/g,
-          (_, original, corrected) =>
-            `<span class="correction-item group relative inline-block mr-1" data-original="${original}">
-              <mark class="bg-red-100 dark:bg-red-900/30 cursor-pointer hover:bg-red-200 dark:hover:bg-red-800/40 px-1 rounded">
-                ${corrected}
-              </mark>
-              <span class="absolute hidden group-hover:block bg-white dark:bg-gray-800 text-sm p-2 rounded shadow-lg -top-8 left-0 z-10 border min-w-[200px]">
-                Original: "${original}"
-              </span>
-            </span>`
-        )
-        .replace(
-          /\[improve\](.*?)\[\/improve\]/g,
-          '<mark class="bg-amber-100 dark:bg-amber-900/30 px-1 rounded inline-block mr-1">$1</mark>'
-        )
-        .replace(
-          /\[note\](.*?)\[\/note\]/g,
-          '<span class="explanation text-xs text-muted-foreground italic inline-block ml-1 mr-2">💡 $1</span>'
-        );
+      const contentWithoutMetrics = response.content.replace(
+        /\[errors=\d+\]|\[improvements=\d+\]|\[score=\d+\]/g,
+        ""
+      );
+
+      // Split content into paragraphs
+      const paragraphs = contentWithoutMetrics.split(/\n\s*\n/);
+
+      const formattedText = paragraphs
+        .map((paragraph) => {
+          // Process each paragraph for inline corrections/improvements/notes
+          const parts = paragraph.split(
+            /(\[fix=.*?\].*?\[\/fix\]|\[improve\].*?\[\/improve\]|\[note\].*?\[\/note\])/g
+          );
+
+          const processedParagraph = parts
+            .map((part) => {
+              if (part.startsWith("[fix=")) {
+                const match = part.match(/\[fix=(.*?)\](.*?)\[\/fix\]/);
+                if (match) {
+                  const original = match[1];
+                  const corrected = match[2];
+                  return `<span class="correction-item group relative inline-block mr-1" data-original="${original}">
+                    <mark class="bg-red-100 dark:bg-red-900/30 cursor-pointer hover:bg-red-200 dark:hover:bg-red-800/40 px-1 rounded">
+                      ${corrected}
+                    </mark>
+                    <span class="absolute hidden group-hover:block bg-white dark:bg-gray-800 text-sm p-2 rounded shadow-lg -top-8 left-0 z-10 border min-w-[200px]">
+                      Original: "${original}"
+                    </span>
+                  </span>`;
+                }
+              } else if (part.startsWith("[improve]")) {
+                const match = part.match(/\[improve\](.*?)\[\/improve\]/);
+                if (match) {
+                  return `<mark class="bg-amber-100 dark:bg-amber-900/30 px-1 rounded inline-block mr-1">${match[1]}</mark>`;
+                }
+              } else if (part.startsWith("[note]")) {
+                const match = part.match(/\[note\](.*?)\[\/note\]/);
+                if (match) {
+                  return `<span class="explanation text-xs text-muted-foreground italic inline-block ml-1 mr-2">💡 ${match[1]}</span>`;
+                }
+              }
+              return part;
+            })
+            .join("");
+
+          return `<p>${processedParagraph}</p>`; // Wrap each processed paragraph in <p> tags
+        })
+        .join(""); // Join paragraphs without extra separators, as <p> tags will handle spacing
+
       setOutputText(formattedText);
 
       // Extract metrics
@@ -264,7 +292,7 @@ export default function GrammarPage() {
             <CardContent>
               <div className="space-y-6">
                 <div
-                  className={`min-h-[200px] p-3 rounded-md border ${
+                  className={`p-4 rounded-md border shadow-inner overflow-auto max-h-[400px] ${
                     outputText ? "bg-muted/50" : "bg-muted/30"
                   }`}
                 >
@@ -277,18 +305,20 @@ export default function GrammarPage() {
                     </div>
                   ) : (
                     <>
-                      <div
-                        className="whitespace-pre-line"
-                        dangerouslySetInnerHTML={{ __html: outputText }}
-                      />
                       {corrections.length > 0 && (
-                        <div className="mt-6">
+                        <div className="mb-6">
                           <CorrectionList
                             corrections={corrections}
                             onApplyCorrection={handleApplyCorrection}
                             onIgnoreCorrection={handleIgnoreCorrection}
                           />
                         </div>
+                      )}
+                      {outputText && (
+                        <div
+                          className="text-base"
+                          dangerouslySetInnerHTML={{ __html: outputText }}
+                        />
                       )}
                     </>
                   )}
