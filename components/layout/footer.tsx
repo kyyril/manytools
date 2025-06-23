@@ -61,10 +61,10 @@ const Footer = () => {
 
               <li>
                 <Link
-                  href="/tools/ai-detector"
+                  href="/tools/plagiarism"
                   className="text-muted-foreground hover:text-primary"
                 >
-                  AI Detector
+                  Plagiarism
                 </Link>
               </li>
             </ul>

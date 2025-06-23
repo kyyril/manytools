@@ -17,8 +17,8 @@ const Navbar = () => {
 
   const routes = [
     { name: "Home", path: "/" },
-    { name: "MakalahAI Builder", path: "/builder" },
-    { name: "Project History", path: "/history" },
+    // { name: "MakalahAI Builder", path: "/builder" },
+    // { name: "Project History", path: "/history" },
     { name: "Paraphrase", path: "/tools/paraphrase" },
     { name: "Summarize", path: "/tools/summarize" },
     { name: "Grammar Checker", path: "/tools/grammar" },
@@ -52,14 +52,6 @@ const Navbar = () => {
         </div>
         <div className="flex items-center gap-4">
           <TokenDisplay />
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Toggle language"
-            className="mr-2"
-          >
-            <Globe className="h-5 w-5" />
-          </Button>
           <Button
             variant="ghost"
             size="icon"

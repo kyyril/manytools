@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import InitialMakalahForm from "@/components/InitialMakalahForm";
 import ChunkDisplay from "@/components/ChunkDisplay";
 import Editor from "@/components/Editor";
@@ -10,40 +10,17 @@ import {
   saveCheckpoint,
   loadCheckpoint,
   Chapter,
-  SubChapter,
 } from "@/lib/checkpoint";
-import {
-  generateChunkedContent,
-  checkGrammarWithGemini,
-  paraphraseWithGemini,
-  summarizeWithGemini,
-  ParaphraseStyle,
-  SummarizeStyle,
-  paraphraseStyles,
-  summarizeStyles,
-  grammarStyles,
-} from "@/lib/gemini";
-import { countTokens } from "@/lib/tokenizer";
+import { generateChunkedContent } from "@/lib/gemini";
 import { v4 as uuidv4 } from "uuid";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import makalahSampleData from "@/data/makalah-sample.json";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-
-interface ParsedMakalahStructure {
-  bab: { title: string; sub: { title: string }[] }[];
-}
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 export default function BuilderPage() {
   const { toast } = useToast();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const checkpointId = searchParams.get("id");
 
@@ -53,13 +30,7 @@ export default function BuilderPage() {
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
   const [currentSubChapterIndex, setCurrentSubChapterIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [isGrammarLoading, setIsGrammarLoading] = useState(false);
-  const [isParaphraseLoading, setIsParaphraseLoading] = useState(false);
-  const [isSummarizeLoading, setSummarizeLoading] = useState(false);
-  const [paraphraseStyle, setParaphraseStyle] = useState("standard");
-  const [summarizeStyle, setSummarizeStyle] = useState("smart");
-  const [summarizeLength, setSummarizeLength] = useState<number[]>([50]);
-  const [grammarStyle, setGrammarStyle] = useState("standard");
+  const [regenerateWordCount, setRegenerateWordCount] = useState(100);
 
   const handleLoadSample = () => {
     const newMakalahId = uuidv4();
@@ -135,7 +106,7 @@ export default function BuilderPage() {
     };
 
     initializeMakalah();
-  }, [checkpointId]);
+  }, [checkpointId, toast]);
 
   const startNewMakalah = () => {
     const newMakalahId = uuidv4();
@@ -296,7 +267,7 @@ export default function BuilderPage() {
     const currentChapter = makalah.bab[nextChapterIdx];
     const currentSubChapter = currentChapter.sub[nextSubChapterIdx];
 
-    const instruction = `Generate content for the "${currentSubChapter.title}" sub-chapter under the "${currentChapter.title}" chapter for a makalah titled "${makalah.judul}" on the topic of "${makalah.topik}".`;
+    const instruction = `Generate content for the "${currentSubChapter.title}" sub-chapter under the "${currentChapter.title}" chapter for a makalah titled "${makalah.judul}" on the topic of "${makalah.topik}". Generate approximately ${regenerateWordCount} words.`;
 
     // Build context from previously generated content
     let context = `Abstract: ${makalah.abstrak}\n\n`;
@@ -372,7 +343,94 @@ export default function BuilderPage() {
     }
   };
 
-  const handleEditorChange = (newContent: string) => {
+  const regenerateChunk = async (
+    chapterIndex: number,
+    subChapterIndex: number,
+    wordCount: number
+  ) => {
+    if (!makalah || isLoading) return;
+
+    setIsLoading(true);
+
+    const currentChapter = makalah.bab[chapterIndex];
+    const currentSubChapter = currentChapter.sub[subChapterIndex];
+
+    const instruction = `Generate content for the "${currentSubChapter.title}" sub-chapter under the "${currentChapter.title}" chapter for a makalah titled "${makalah.judul}" on the topic of "${makalah.topik}". Generate approximately ${wordCount} words.`;
+
+    // Build context from previously generated content
+    let context = `Abstract: ${makalah.abstrak}\n\n`;
+    for (let i = 0; i <= chapterIndex; i++) {
+      context += `Chapter ${i + 1}: ${makalah.bab[i].title}\n`;
+      for (
+        let j = 0;
+        j < (i === chapterIndex ? subChapterIndex : makalah.bab[i].sub.length);
+        j++
+      ) {
+        if (makalah.bab[i].sub[j].generated) {
+          context += `  Sub-chapter ${i + 1}.${j + 1}: ${
+            makalah.bab[i].sub[j].title
+          }\n`;
+          context += `${makalah.bab[i].sub[j].content}\n\n`;
+        }
+      }
+    }
+
+    try {
+      const generated = await generateChunkedContent(
+        instruction,
+        context,
+        currentSubChapter.title
+      );
+      const newContent = generated.content;
+      if (generated.error) {
+        toast({
+          title: "Error",
+          description: `Failed to generate content for "${currentSubChapter.title}": ${generated.error}`,
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      setMakalah((prev) => {
+        if (!prev) return null;
+        const updatedBab = [...prev.bab];
+        updatedBab[chapterIndex].sub[subChapterIndex] = {
+          ...updatedBab[chapterIndex].sub[subChapterIndex],
+          content: newContent,
+          generated: true,
+        };
+        return {
+          ...prev,
+          bab: updatedBab,
+          lastCheckpoint: new Date().toISOString(),
+        };
+      });
+
+      setCurrentChunkContent(newContent);
+      setEditorContent(newContent);
+      setCurrentChapterIndex(chapterIndex);
+      setCurrentSubChapterIndex(subChapterIndex);
+
+      toast({
+        title: "Success",
+        description: `Content for "${currentSubChapter.title}" has been regenerated.`,
+      });
+    } catch (error: any) {
+      console.error("Error generating chunk:", error);
+      toast({
+        title: "Error",
+        description: `Failed to generate content for "${
+          currentSubChapter.title
+        }": ${error.message || "Unknown error"}.`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEditorChange = async (newContent: string) => {
     setEditorContent(newContent);
     if (
       makalah &&
@@ -527,7 +585,7 @@ export default function BuilderPage() {
               onClick={generateNextChunk}
               disabled={isLoading || !makalah || makalah.bab.length === 0}
             >
-              {isLoading ? "Generating..." : "Generate Next Chunk"}
+              {isLoading ? "Generate Next Chunk" : "Generate Next Chunk"}
             </Button>
             <Button onClick={saveCurrentProgress} disabled={!makalah}>
               Save Progress
@@ -567,11 +625,40 @@ export default function BuilderPage() {
               Next Chunk
             </Button>
           </div>
+
+          <div className="flex items-center space-x-2 mb-4">
+            <Label htmlFor="regenerateWordCount">Words per chunk</Label>
+            <Input
+              id="regenerateWordCount"
+              type="number"
+              value={regenerateWordCount}
+              onChange={(e) => setRegenerateWordCount(parseInt(e.target.value))}
+              className="w-20"
+            />
+          </div>
+          <Button
+            onClick={generateNextChunk}
+            disabled={isLoading || !makalah || makalah.bab.length === 0}
+          >
+            {isLoading ? "Generating..." : "Generate Next Chunk"}
+          </Button>
           <ChunkDisplay content={currentChunkContent} />
           <Editor
             content={editorContent}
             onContentChange={handleEditorChange}
           />
+          <Button
+            onClick={() =>
+              regenerateChunk(
+                currentChapterIndex,
+                currentSubChapterIndex,
+                regenerateWordCount
+              )
+            }
+            disabled={isLoading || !makalah}
+          >
+            {isLoading ? "Regenerating..." : "Regenerate Chunk"}
+          </Button>
         </div>
       </div>
     </div>
