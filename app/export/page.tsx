@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from "react";
+"use client";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { MakalahStructure, loadCheckpoint } from "@/lib/checkpoint";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 
-export default function ExportPage() {
+function ExportPageContent() {
   const searchParams = useSearchParams();
   const checkpointId = searchParams.get("id");
   const [makalah, setMakalah] = useState<MakalahStructure | null>(null);
@@ -192,5 +193,22 @@ export default function ExportPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-6">Loading...</h1>
+      <p>Please wait while the export page is loading.</p>
+    </div>
+  );
+}
+
+export default function ExportPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <ExportPageContent />
+    </Suspense>
   );
 }

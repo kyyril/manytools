@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import InitialMakalahForm from "@/components/InitialMakalahForm";
 import ChunkDisplay from "@/components/ChunkDisplay";
@@ -19,7 +19,7 @@ import makalahSampleData from "@/data/makalah-sample.json";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
-export default function BuilderPage() {
+function BuilderPageContent() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const checkpointId = searchParams.get("id");
@@ -662,5 +662,22 @@ export default function BuilderPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-6">Loading Builder...</h1>
+      <p>Please wait while the builder is loading.</p>
+    </div>
+  );
+}
+
+export default function BuilderPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <BuilderPageContent />
+    </Suspense>
   );
 }

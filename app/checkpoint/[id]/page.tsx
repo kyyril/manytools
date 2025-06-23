@@ -7,16 +7,30 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 interface CheckpointPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default function CheckpointPage({ params }: CheckpointPageProps) {
-  const { id } = params;
+  const [id, setId] = useState<string | null>(null);
   const [makalah, setMakalah] = useState<MakalahStructure | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const initializeParams = async () => {
+      try {
+        const resolvedParams = await params;
+        setId(resolvedParams.id);
+      } catch (err) {
+        console.error("Error resolving params:", err);
+        setError("Failed to load page parameters.");
+        setLoading(false);
+      }
+    };
+    initializeParams();
+  }, [params]);
 
   useEffect(() => {
     const fetchCheckpoint = async () => {
